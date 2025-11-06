@@ -155,5 +155,22 @@ fun Route.taskRoutes() {
 
 ---
 
+## 📈 What's Next? (Weeks 7-11)
+
+This Week 6 version is **intentionally simple** - we start with the basics and add complexity weekly:
+
+| Week | You'll Add | Why |
+|------|-----------|-----|
+| **Week 6** | Basic CRUD (add, delete) | Foundation - learn server-first, HTMX, dual-mode patterns |
+| **Week 7** | Toggle button, inline edit | Realistic features - learn state changes, edit/view modes |
+| **Week 8** | Pagination, search, filtering | Scaling - learn query params, template partials |
+| **Week 9** | Instrumentation (logging) | Evaluation - learn metrics capture for user testing |
+| **Week 10** | Analysis & redesign | Data-driven iteration - learn to use evidence to improve design |
+| **Week 11** | Portfolio assembly | Professional presentation - learn evidence-based reflection |
+
+**Don't worry about later weeks yet** - focus on getting Week 6 working perfectly. Each week builds on the previous one.
+
+---
+
 **Version**: Week 6 baseline (simple Int IDs, no toggle, no pagination)
 **Next week**: Week 7 adds `completed` field and inline edit
