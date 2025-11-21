@@ -204,6 +204,11 @@ fun Application.configureSessions() {
  */
 fun Application.configureRouting() {
     routing {
+        // Root redirect to tasks page
+        get("/") {
+            call.respondRedirect("/tasks")
+        }
+
         // Static files (CSS, JS, HTMX library)
         staticResources("/static", "static")
 
