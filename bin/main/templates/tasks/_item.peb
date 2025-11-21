@@ -12,11 +12,12 @@
     Edit
   </button>
   
-  {# Delete form - same as Week 7 #}
+  {# Week 8 Lab 2: Delete form with confirmation (dual-path support) #}
   <form action="/tasks/{{ task.id }}/delete" method="post" style="display: inline; margin: 0;"
-        hx-post="/tasks/{{ task.id }}/delete"
+        hx-delete="/tasks/{{ task.id }}"
         hx-target="#task-{{ task.id }}"
-        hx-swap="outerHTML">
+        hx-swap="outerHTML"
+        hx-confirm="Delete the task '{{ task.title }}'?">
     <button type="submit" aria-label="Delete task: {{ task.title }}" style="margin: 0;">Delete</button>
   </form>
 </li>

@@ -60,12 +60,14 @@ fun Route.taskRoutes() {
 
     /**
      * GET /tasks - List all tasks with pagination and filtering
-     * Week 8: Added query and page parameters
+     * Week 8 Lab 2: Added error and msg parameters for no-JS validation feedback
      */
     get("/tasks") {
         val query = call.request.queryParameters["q"].orEmpty()
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
         val editingId = call.request.queryParameters["editing"]?.toIntOrNull()
+        val error = call.request.queryParameters["error"]
+        val msg = call.request.queryParameters["msg"]
         
         val pageData = TaskRepository.search(query = query, page = page, size = 10)
         
@@ -73,7 +75,9 @@ fun Route.taskRoutes() {
             "title" to "Tasks",
             "page" to pageData,
             "query" to query,
-            "editingId" to editingId
+            "editingId" to editingId,
+            "error" to error,
+            "msg" to msg
         )
         val template = pebble.getTemplate("tasks/index.peb")
         val writer = StringWriter()
@@ -115,24 +119,33 @@ fun Route.taskRoutes() {
 
     /**
      * POST /tasks - Add new task
-     * Dual-mode: HTMX fragment or PRG redirect
+     * Week 8 Lab 2: Enhanced server-side validation with dual-path error handling
      */
     post("/tasks") {
         val title = call.receiveParameters()["title"].orEmpty().trim()
-        // Validation
+        
+        // Validation: blank title
         if (title.isBlank()) {
-            // Validation error handling
             if (call.isHtmx()) {
-                // Week 7 fix: Use #error region with assertive ARIA
-                val error = """<div id="error" hx-swap-oob="true">Title is required. Please enter at least one character.</div>"""
-                return@post call.respondText(error, ContentType.Text.Html, HttpStatusCode.BadRequest)
+                val status = """<div id="status" hx-swap-oob="true">Title is required.</div>"""
+                return@post call.respondText(status, ContentType.Text.Html, HttpStatusCode.BadRequest)
             } else {
-                // No-JS: redirect back (could add error query param)
-                call.response.headers.append("Location", "/tasks")
-                return@post call.respond(HttpStatusCode.SeeOther)
+                // No-JS: redirect with error query param
+                return@post call.respondRedirect("/tasks?error=title")
             }
         }
 
+        // Validation: title too long
+        if (title.length > 200) {
+            if (call.isHtmx()) {
+                val status = """<div id="status" hx-swap-oob="true">Title too long (max 200 characters).</div>"""
+                return@post call.respondText(status, ContentType.Text.Html, HttpStatusCode.BadRequest)
+            } else {
+                return@post call.respondRedirect("/tasks?error=title&msg=too_long")
+            }
+        }
+
+        // Success path
         val task = TaskRepository.add(title)
 
         if (call.isHtmx()) {
@@ -153,28 +166,29 @@ fun Route.taskRoutes() {
         }
 
         // No-JS: POST-Redirect-GET pattern (303 See Other)
-        call.response.headers.append("Location", "/tasks")
-        call.respond(HttpStatusCode.SeeOther)
+        call.respondRedirect("/tasks")
     }
 
     /**
-     * POST /tasks/{id}/delete - Delete task
-     * Dual-mode: HTMX empty response or PRG redirect
+     * Week 8 Lab 2: DELETE /tasks/{id} - Delete task (HTMX path with confirmation)
+     */
+    delete("/tasks/{id}") {
+        val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+        val task = TaskRepository.find(id)
+        TaskRepository.delete(id)
+
+        val status = """<div id="status" hx-swap-oob="true">Deleted "${task?.title ?: "task"}".</div>"""
+        // Return empty string (outerHTML swap removes the <li>)
+        call.respondText(status, ContentType.Text.Html)
+    }
+
+    /**
+     * Week 8 Lab 2: POST /tasks/{id}/delete - Delete task (no-JS fallback)
      */
     post("/tasks/{id}/delete") {
-        val id = call.parameters["id"]?.toIntOrNull()
-        val removed = id?.let { TaskRepository.delete(it) } ?: false
-
-        if (call.isHtmx()) {
-            val message = if (removed) "Task deleted." else "Could not delete task."
-            val status = """<div id="status" hx-swap-oob="true">$message</div>"""
-            // Return empty content to trigger outerHTML swap (removes the <li>)
-            return@post call.respondText(status, ContentType.Text.Html)
-        }
-
-        // No-JS: POST-Redirect-GET pattern (303 See Other)
-        call.response.headers.append("Location", "/tasks")
-        call.respond(HttpStatusCode.SeeOther)
+        val id = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+        TaskRepository.delete(id)
+        call.respondRedirect("/tasks")
     }
 
     /**
