@@ -1,0 +1,19 @@
+{# Week 8: Task list partial with accessibility result count #}
+<ul id="task-list" aria-describedby="result-count">
+  {% for t in page.items %}
+    {% if editingId and editingId == t.id %}
+      {# Show edit form for this task #}
+      {% include "tasks/_edit.peb" with task=t %}
+    {% else %}
+      {# Show view mode for this task #}
+      {% include "tasks/_item.peb" with task=t %}
+    {% endif %}
+  {% else %}
+    <li>No tasks yet. Add one above!</li>
+  {% endfor %}
+</ul>
+
+{# Screen reader result count announcement #}
+<p id="result-count" class="visually-hidden">
+  Showing {{ page.items|length }} of {{ page.total }} tasks{% if query %} matching "{{ query }}"{% endif %}
+</p>

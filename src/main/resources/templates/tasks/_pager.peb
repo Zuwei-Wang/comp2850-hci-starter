@@ -1,0 +1,36 @@
+{# Week 8: Pagination partial with dual-path support #}
+{% if page.pages > 1 %}
+<nav aria-label="Pagination">
+  <ul class="pagination" style="display: flex; gap: 0.5rem; list-style: none; padding: 0; margin: 1rem 0; justify-content: center;">
+    {% if page.page > 1 %}
+      <li>
+        <a href="/tasks?q={{ query|default('') }}&page={{ page.page - 1 }}"
+           hx-get="/tasks/fragment?q={{ query|default('') }}&page={{ page.page - 1 }}"
+           hx-target="#task-area"
+           hx-push-url="true"
+           hx-swap="innerHTML"
+           aria-label="Go to previous page">
+          Previous
+        </a>
+      </li>
+    {% endif %}
+    
+    <li aria-current="page" style="padding: 0.5rem 1rem;">
+      Page {{ page.page }} of {{ page.pages }}
+    </li>
+    
+    {% if page.page < page.pages %}
+      <li>
+        <a href="/tasks?q={{ query|default('') }}&page={{ page.page + 1 }}"
+           hx-get="/tasks/fragment?q={{ query|default('') }}&page={{ page.page + 1 }}"
+           hx-target="#task-area"
+           hx-push-url="true"
+           hx-swap="innerHTML"
+           aria-label="Go to next page">
+          Next
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}

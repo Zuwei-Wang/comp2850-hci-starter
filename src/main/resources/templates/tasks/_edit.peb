@@ -1,0 +1,38 @@
+{# Week 7: Edit mode partial for inline editing #}
+<li id="task-{{ task.id }}">
+  <form action="/tasks/{{ task.id }}" method="post"
+        hx-post="/tasks/{{ task.id }}"
+        hx-target="#task-{{ task.id }}"
+        hx-swap="outerHTML">
+    
+    <label for="edit-title-{{ task.id }}" class="visually-hidden">Edit task title</label>
+    <input type="text" 
+           id="edit-title-{{ task.id }}"
+           name="title" 
+           value="{{ task.title }}"
+           required
+           aria-describedby="{% if error %}error-{{ task.id }}{% else %}hint-{{ task.id }}{% endif %}"
+           aria-invalid="{% if error %}true{% else %}false{% endif %}"
+           autofocus>
+    
+    {# Error message (if validation failed) #}
+    {% if error %}
+    <div id="error-{{ task.id }}" role="alert" aria-live="assertive" style="color: #d32f2f; margin-top: 0.25rem;">
+      {{ error }}
+    </div>
+    {% else %}
+    <small id="hint-{{ task.id }}">Press Enter to save, Escape to cancel.</small>
+    {% endif %}
+    
+    {# Save button #}
+    <button type="submit">Save</button>
+    
+    {# Cancel button - HTMX only, swaps back to view mode #}
+    <button type="button"
+            hx-get="/tasks/{{ task.id }}/view"
+            hx-target="#task-{{ task.id }}"
+            hx-swap="outerHTML">
+      Cancel
+    </button>
+  </form>
+</li>

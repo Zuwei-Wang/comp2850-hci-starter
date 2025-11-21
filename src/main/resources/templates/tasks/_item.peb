@@ -1,0 +1,22 @@
+{# Week 8: View mode partial for a single task (refactored for _list.peb) #}
+<li id="task-{{ task.id }}" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 0.5rem;">
+  <span style="flex: 1;">{{ task.title }}</span>
+  
+  {# Edit button - HTMX swaps to edit form #}
+  <button type="button"
+          hx-get="/tasks/{{ task.id }}/edit"
+          hx-target="#task-{{ task.id }}"
+          hx-swap="outerHTML"
+          aria-label="Edit task: {{ task.title }}"
+          style="margin: 0;">
+    Edit
+  </button>
+  
+  {# Delete form - same as Week 7 #}
+  <form action="/tasks/{{ task.id }}/delete" method="post" style="display: inline; margin: 0;"
+        hx-post="/tasks/{{ task.id }}/delete"
+        hx-target="#task-{{ task.id }}"
+        hx-swap="outerHTML">
+    <button type="submit" aria-label="Delete task: {{ task.title }}" style="margin: 0;">Delete</button>
+  </form>
+</li>

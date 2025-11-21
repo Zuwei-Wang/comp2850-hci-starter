@@ -6,4 +6,4 @@ id,title,story_ref,story_type,need,type,severity,inclusion_risk,evidence,notes,c
 5,No progress indicator for completed tasks,stories.md#S5,Job story,Motivation & feedback,Usability,Low,Cognitive,"P-A notes L35; P-B notes L15",Nice-to-have; defer to Semester 2 backlog,false
 6,Error messages not persistent in no-JS path,stories.md#S6,Pain point,Error recovery,Accessibility,High,"Cognitive,SR","Internal testing; WCAG 3.3.1",PRG redirect loses error context; need error summary on target page,true
 7,Skip link not tested with screen reader,Internal audit,WCAG check,Bypass blocks,Accessibility,Medium,SR,"WCAG 2.4.1",Lab 1 tested keyboard focus but not SR announcement; verify with NVDA,false
-8,Live region uses polite (should be assertive for errors),Internal audit,WCAG check,Error announcement,Accessibility,High,SR,"WCAG 4.1.3",Errors need aria-live=assertive so SR interrupts to announce; success messages stay polite,false
+8,Live region uses polite (should be assertive for errors),Internal audit,WCAG check,Error announcement,Accessibility,High,SR,"WCAG 4.1.3",FIXED Week 7: Separate error region with role=alert aria-live=assertive added to base.peb,true
