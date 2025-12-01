@@ -69,6 +69,24 @@ fun Route.taskRoutes() {
         val error = call.request.queryParameters["error"]
         val msg = call.request.queryParameters["msg"]
         
+        // Week 10 Lab 2: Check for edit success cookie (no-JS confirmation)
+        val editSuccessCookie = call.request.cookies["edit_success"]
+        val editSuccess = editSuccessCookie != null
+        val editSuccessTitle = editSuccessCookie?.split(":")?.getOrNull(1) ?: ""
+        
+        // Week 10 Lab 2: Check for edit error cookie (no-JS validation)
+        val editErrorCookie = call.request.cookies["edit_error"]
+        val editErrorTaskId = editErrorCookie?.split(":")?.getOrNull(0)?.toIntOrNull()
+        val editErrorType = editErrorCookie?.split(":")?.getOrNull(1) ?: ""
+        
+        // Clear cookies after reading them (one-time use)
+        if (editSuccess) {
+            call.response.cookies.appendExpired("edit_success", path = "/")
+        }
+        if (editErrorCookie != null) {
+            call.response.cookies.appendExpired("edit_error", path = "/")
+        }
+        
         val pageData = TaskRepository.search(query = query, page = page, size = 10)
         
         val model = mapOf(
@@ -77,7 +95,11 @@ fun Route.taskRoutes() {
             "query" to query,
             "editingId" to editingId,
             "error" to error,
-            "msg" to msg
+            "msg" to msg,
+            "edit_success" to editSuccess,
+            "edit_success_title" to editSuccessTitle,
+            "edit_error_task_id" to editErrorTaskId,
+            "edit_error_type" to editErrorType
         )
         val template = pebble.getTemplate("tasks/index.peb")
         val writer = StringWriter()
@@ -366,7 +388,15 @@ fun Route.taskRoutes() {
                 val errorMsg = """<div id="error" hx-swap-oob="true">Title cannot be blank.</div>"""
                 return@post call.respondText(writer.toString() + errorMsg, ContentType.Text.Html, HttpStatusCode.BadRequest)
             } else {
-                // No-JS: Redirect back to edit mode
+                // Week 10 Lab 2: No-JS error handling with cookie
+                call.response.cookies.append(
+                    Cookie(
+                        name = "edit_error",
+                        value = "${task.id}:blank_title",
+                        maxAge = 10,  // 10 seconds
+                        path = "/"
+                    )
+                )
                 call.response.headers.append("Location", "/tasks?editing=${task.id}")
                 return@post call.respond(HttpStatusCode.SeeOther)
             }
@@ -397,7 +427,16 @@ fun Route.taskRoutes() {
             return@post call.respondText(writer.toString() + status, ContentType.Text.Html)
         }
 
-        // No-JS: Redirect to tasks list
+        // Week 10 Lab 2: No-JS with focus management
+        // Set success cookie for status message display
+        call.response.cookies.append(
+            Cookie(
+                name = "edit_success",
+                value = "${task.id}:${task.title}",
+                maxAge = 10,  // 10 seconds (just long enough for one page load)
+                path = "/"
+            )
+        )
         call.response.headers.append("Location", "/tasks")
         call.respond(HttpStatusCode.SeeOther)
     }

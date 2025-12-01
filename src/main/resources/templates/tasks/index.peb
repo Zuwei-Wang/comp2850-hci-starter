@@ -3,6 +3,17 @@
 {% block content %}
 <h1>Tasks</h1>
 
+{# Week 10 Lab 2: Success message (no-JS edit confirmation) #}
+{% if edit_success %}
+<div role="status" aria-live="polite" class="success-message" id="edit-success" tabindex="-1" autofocus>
+  <p>✓ Task "{{ edit_success_title }}" updated successfully.</p>
+</div>
+<script>
+  // Auto-focus success message for screen readers and keyboard users
+  document.getElementById('edit-success')?.focus();
+</script>
+{% endif %}
+
 {# Week 8 Lab 2: Error Summary (no-JS validation errors) #}
 {% if error %}
 <div role="alert" aria-live="assertive" class="error-summary" id="error-summary" tabindex="-1">

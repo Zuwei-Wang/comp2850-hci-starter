@@ -2,8 +2,12 @@
 <ul id="task-list" aria-describedby="result-count">
   {% for task in page.items %}
     {% if editingId and editingId == task.id %}
-      {# Show edit form for this task #}
-      {% include "tasks/_edit.peb" %}
+      {# Week 10 Lab 2: Show edit form with error if present #}
+      {% if edit_error_task_id and edit_error_task_id == task.id %}
+        {% include "tasks/_edit.peb" with {"error": "Title is required. Please enter at least one character."} %}
+      {% else %}
+        {% include "tasks/_edit.peb" %}
+      {% endif %}
     {% else %}
       {# Show view mode for this task #}
       {% include "tasks/_item.peb" %}

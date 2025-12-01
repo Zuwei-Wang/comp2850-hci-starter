@@ -17,9 +17,13 @@
     
     {# Error message (if validation failed) #}
     {% if error %}
-    <div id="error-{{ task.id }}" role="alert" aria-live="assertive" style="color: #d32f2f; margin-top: 0.25rem;">
+    <div id="error-{{ task.id }}" role="alert" aria-live="assertive" tabindex="-1" style="color: #d32f2f; margin-top: 0.25rem;">
       {{ error }}
     </div>
+    <script>
+      // Week 10 Lab 2: Auto-focus error for no-JS (after PRG redirect)
+      document.getElementById('error-{{ task.id }}')?.focus();
+    </script>
     {% else %}
     <small id="hint-{{ task.id }}">Press Enter to save, Escape to cancel.</small>
     {% endif %}
