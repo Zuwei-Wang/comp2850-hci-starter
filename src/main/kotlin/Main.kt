@@ -60,6 +60,9 @@ fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val host = "0.0.0.0" // Required for Codespaces
 
+    // Week 9: Initialize metrics logging
+    utils.MetricsLogger.init()
+
     embeddedServer(Netty, port = port, host = host) {
         configureLogging()
         configureTemplating()

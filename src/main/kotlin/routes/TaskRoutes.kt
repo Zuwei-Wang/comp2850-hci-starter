@@ -87,13 +87,34 @@ fun Route.taskRoutes() {
 
     /**
      * Week 8: GET /tasks/fragment - Return task list + pager fragments for HTMX
+     * Week 9: Added metrics logging for filter tasks (T1)
      */
     get("/tasks/fragment") {
+        val startTime = System.currentTimeMillis()
+        
         val query = call.request.queryParameters["q"].orEmpty()
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
         val editingId = call.request.queryParameters["editing"]?.toIntOrNull()
         
         val pageData = TaskRepository.search(query = query, page = page, size = 10)
+        
+        // Week 9: Log filter request if query is not empty (T1_filter task)
+        if (query.isNotEmpty()) {
+            val sessionId = call.request.cookies["sid"] ?: "anonymous"
+            val requestId = utils.MetricsLogger.generateRequestId()
+            val duration = System.currentTimeMillis() - startTime
+            
+            utils.MetricsLogger.log(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = "T1_filter",
+                step = "success",
+                outcome = "found_${pageData.total}",
+                durationMs = duration,
+                httpStatus = 200,
+                jsMode = "on" // Fragment endpoint is HTMX-only
+            )
+        }
         
         val model = mapOf(
             "page" to pageData,
@@ -119,13 +140,32 @@ fun Route.taskRoutes() {
 
     /**
      * POST /tasks - Add new task
-     * Week 8 Lab 2: Enhanced server-side validation with dual-path error handling
+     * Week 9: Added metrics logging for evaluation
      */
     post("/tasks") {
+        val startTime = System.currentTimeMillis()
+        
+        // Week 9: Get session and request IDs for metrics
+        val sessionId = call.request.cookies["sid"] ?: "anonymous"
+        val requestId = utils.MetricsLogger.generateRequestId()
+        val jsMode = if (call.isHtmx()) "on" else "off"
+        
         val title = call.receiveParameters()["title"].orEmpty().trim()
         
         // Validation: blank title
         if (title.isBlank()) {
+            val duration = System.currentTimeMillis() - startTime
+            utils.MetricsLogger.log(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = "T3_add",
+                step = "validation_error",
+                outcome = "blank_title",
+                durationMs = duration,
+                httpStatus = 400,
+                jsMode = jsMode
+            )
+            
             if (call.isHtmx()) {
                 val status = """<div id="status" hx-swap-oob="true">Title is required.</div>"""
                 return@post call.respondText(status, ContentType.Text.Html, HttpStatusCode.BadRequest)
@@ -137,6 +177,18 @@ fun Route.taskRoutes() {
 
         // Validation: title too long
         if (title.length > 200) {
+            val duration = System.currentTimeMillis() - startTime
+            utils.MetricsLogger.log(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = "T3_add",
+                step = "validation_error",
+                outcome = "too_long",
+                durationMs = duration,
+                httpStatus = 400,
+                jsMode = jsMode
+            )
+            
             if (call.isHtmx()) {
                 val status = """<div id="status" hx-swap-oob="true">Title too long (max 200 characters).</div>"""
                 return@post call.respondText(status, ContentType.Text.Html, HttpStatusCode.BadRequest)
@@ -147,6 +199,19 @@ fun Route.taskRoutes() {
 
         // Success path
         val task = TaskRepository.add(title)
+        val duration = System.currentTimeMillis() - startTime
+        
+        // Week 9: Log successful task addition
+        utils.MetricsLogger.log(
+            sessionId = sessionId,
+            requestId = requestId,
+            taskCode = "T3_add",
+            step = "success",
+            outcome = "",
+            durationMs = duration,
+            httpStatus = 201,
+            jsMode = jsMode
+        )
 
         if (call.isHtmx()) {
             // Return HTML fragment for new task
@@ -171,11 +236,29 @@ fun Route.taskRoutes() {
 
     /**
      * Week 8 Lab 2: DELETE /tasks/{id} - Delete task (HTMX path with confirmation)
+     * Week 9: Added metrics logging
      */
     delete("/tasks/{id}") {
+        val startTime = System.currentTimeMillis()
+        val sessionId = call.request.cookies["sid"] ?: "anonymous"
+        val requestId = utils.MetricsLogger.generateRequestId()
+        val jsMode = "on" // DELETE is HTMX-only
+        
         val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
         val task = TaskRepository.find(id)
         TaskRepository.delete(id)
+        
+        val duration = System.currentTimeMillis() - startTime
+        utils.MetricsLogger.log(
+            sessionId = sessionId,
+            requestId = requestId,
+            taskCode = "T4_delete",
+            step = "success",
+            outcome = "",
+            durationMs = duration,
+            httpStatus = 200,
+            jsMode = jsMode
+        )
 
         val status = """<div id="status" hx-swap-oob="true">Deleted "${task?.title ?: "task"}".</div>"""
         // Return empty string (outerHTML swap removes the <li>)
@@ -184,10 +267,29 @@ fun Route.taskRoutes() {
 
     /**
      * Week 8 Lab 2: POST /tasks/{id}/delete - Delete task (no-JS fallback)
+     * Week 9: Added metrics logging
      */
     post("/tasks/{id}/delete") {
+        val startTime = System.currentTimeMillis()
+        val sessionId = call.request.cookies["sid"] ?: "anonymous"
+        val requestId = utils.MetricsLogger.generateRequestId()
+        val jsMode = "off" // This route is no-JS fallback
+        
         val id = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
         TaskRepository.delete(id)
+        
+        val duration = System.currentTimeMillis() - startTime
+        utils.MetricsLogger.log(
+            sessionId = sessionId,
+            requestId = requestId,
+            taskCode = "T4_delete",
+            step = "success",
+            outcome = "",
+            durationMs = duration,
+            httpStatus = 303,
+            jsMode = jsMode
+        )
+        
         call.respondRedirect("/tasks")
     }
 
@@ -220,9 +322,14 @@ fun Route.taskRoutes() {
 
     /**
      * Week 7: POST /tasks/{id} - Save edited task
-     * Dual-mode with validation
+     * Week 9: Added metrics logging
      */
     post("/tasks/{id}") {
+        val startTime = System.currentTimeMillis()
+        val sessionId = call.request.cookies["sid"] ?: "anonymous"
+        val requestId = utils.MetricsLogger.generateRequestId()
+        val jsMode = if (call.isHtmx()) "on" else "off"
+        
         val id = call.parameters["id"]?.toIntOrNull()
         val task = id?.let { TaskRepository.find(it) }
 
@@ -235,6 +342,18 @@ fun Route.taskRoutes() {
 
         // Validation
         if (newTitle.isBlank()) {
+            val duration = System.currentTimeMillis() - startTime
+            utils.MetricsLogger.log(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = "T2_edit",
+                step = "validation_error",
+                outcome = "blank_title",
+                durationMs = duration,
+                httpStatus = 400,
+                jsMode = jsMode
+            )
+            
             if (call.isHtmx()) {
                 // Return edit form with error
                 val template = pebble.getTemplate("tasks/_edit.peb")
@@ -256,6 +375,18 @@ fun Route.taskRoutes() {
         // Update task
         task.title = newTitle
         TaskRepository.update(task)
+        
+        val duration = System.currentTimeMillis() - startTime
+        utils.MetricsLogger.log(
+            sessionId = sessionId,
+            requestId = requestId,
+            taskCode = "T2_edit",
+            step = "success",
+            outcome = "",
+            durationMs = duration,
+            httpStatus = 200,
+            jsMode = jsMode
+        )
 
         if (call.isHtmx()) {
             // Return updated view fragment
