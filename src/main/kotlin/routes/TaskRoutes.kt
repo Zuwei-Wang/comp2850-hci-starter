@@ -247,7 +247,14 @@ fun Route.taskRoutes() {
                 </form>
             </li>"""
 
-            val status = """<div id="status" hx-swap-oob="true">Task "${task.title}" added successfully.</div>"""
+            val status = """
+                <div id="status"
+                     role="alert"
+                     aria-live="assertive"
+                     hx-swap-oob="true">
+                Task "${task.title}" added successfully.
+                </div>
+            """.trimIndent()
 
             return@post call.respondText(fragment + status, ContentType.Text.Html, HttpStatusCode.Created)
         }
