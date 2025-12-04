@@ -2,12 +2,12 @@
 /.gradle/
 .idea/
 /out/
+/bin/
 .claude/
 COMPILATION-ISSUES.md
 
 # Privacy-sensitive data (Week 9 evaluation)
 /data/tasks.csv
-/data/metrics.csv
 /wk09/lab-wk9/research/consent-log.md  # Contains participant-session linking info
 /wk09/lab-wk9/research/pilot-notes.md  # Detailed observations with participant codes
 /wk09/lab-wk9/evidence/metrics-backup-*.csv  # Backup copies of metrics
